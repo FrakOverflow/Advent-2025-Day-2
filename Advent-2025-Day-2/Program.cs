@@ -31,9 +31,10 @@ try
     Console.WriteLine($"Sum of invalid SKUs: {result}");*/
     
     var idRanges = File.ReadAllLines(inputPath).First();
+    var validator = new SkuValidatorP2();
 
     var rangesP2 = SkuValidatorP2.GetRanges(idRanges);
-    var resultP2 = SkuValidatorP2.GetInvalidSkuSum(rangesP2);
+    var resultP2 = validator.GetInvalidSkuSum(rangesP2);
 
     Console.WriteLine($"Sum of invalid SKUs: {resultP2}");
 

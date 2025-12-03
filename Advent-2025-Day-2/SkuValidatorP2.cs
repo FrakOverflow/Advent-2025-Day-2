@@ -1,20 +1,32 @@
 ﻿namespace Advent_2025_Day_2
 {
     using System;
+    using System.Collections;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
     using System.Text;
     using System.Threading.Tasks;
 
     internal class SkuValidatorP2
     {
+        private ConcurrentDictionary<long, IEnumerable<int>> factorMemo;
+
+        /// <summary>
+        /// Create a new instace of the SKU Validator
+        /// </summary>
+        public SkuValidatorP2()
+        {
+            this.factorMemo = new ConcurrentDictionary<long, IEnumerable<int>>();
+        }
+
         /// <summary>
         /// Get all invalid SKUs from a list of ranges in parallel.
         /// </summary>
         /// <param name="ranges">List of ranges and Tuple<long, long></param>
         /// <returns>A list of invalid SKUs as Longs</returns>
-        internal static long GetInvalidSkuSum(List<Tuple<long, long>> ranges)
+        internal long GetInvalidSkuSum(List<Tuple<long, long>> ranges)
         {
             // Get invalid SKUs in parallel (modified to return sum instead of list)
             // var results = new ConcurrentBag<long>();
@@ -35,6 +47,48 @@
             // Return Sum of invalid SKUs
             return sum;
 
+        }
+
+
+        /// <summary>
+        /// Check whether a given SKU is valid
+        /// </summary>
+        /// <param name="sku">SKU as a Long</param>
+        /// <returns>Bool indicating sku validity</returns>
+        private bool IsValidSku(long sku)
+        {
+            return IsValidSku(sku.ToString());
+        }
+
+        /// <summary>
+        /// Check whether a given SKU is valid
+        /// </summary>
+        /// <param name="sku">SKU as a string</param>
+        /// <returns>Bool indicating sku validity</returns>
+        private bool IsValidSku(string sku)
+        {
+            var isValid = true;
+
+            // Check memoization dictionary for factors, if it doesn't exist, compute and store it
+            if (!this.factorMemo.TryGetValue(sku.Length, out var factors))
+            {
+                // Get all possible factors of sku length and use them to partition the sku for validation
+                factors = GetFactors(sku.Length);
+                _ = this.factorMemo.TryAdd(sku.Length, factors);
+            }
+
+            foreach (var factor in factors)
+            {
+                isValid = ValidatePartitionedSku(sku, factor);
+
+                if(!isValid)
+                {
+                    Console.WriteLine($"- {sku} is Invalid at partition length {factor}");
+                    break;
+                }
+            }
+            
+            return isValid;
         }
 
         /// <summary>
@@ -65,42 +119,6 @@
             {
                 yield return i;
             }
-        }
-
-        /// <summary>
-        /// Check whether a given SKU is valid
-        /// </summary>
-        /// <param name="sku">SKU as a Long</param>
-        /// <returns>Bool indicating sku validity</returns>
-        private static bool IsValidSku(long sku)
-        {
-            return IsValidSku(sku.ToString());
-        }
-
-        /// <summary>
-        /// Check whether a given SKU is valid
-        /// </summary>
-        /// <param name="sku">SKU as a string</param>
-        /// <returns>Bool indicating sku validity</returns>
-        private static bool IsValidSku(string sku)
-        {
-            var isValid = true;
-
-            // Get all possible factors of sku length and use them to partition the sku for validation
-            var factors = GetFactors(sku.Length);
-
-            foreach (var factor in factors)
-            {
-                isValid = ValidatePartitionedSku(sku, factor);
-
-                if(!isValid)
-                {
-                    Console.WriteLine($"- {sku} is Invalid at partition length {factor}");
-                    break;
-                }
-            }
-            
-            return isValid;
         }
 
         /// <summary>
